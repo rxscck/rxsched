@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>班表預覽</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&family=Zen+Old+Mincho:wght@400;700&display=swap');
+
+    :root {
+        --color-primary: #3c4f6d; /* 深藍色 */
+        --color-secondary: #f4f3e7; /* 淺米色 */
+        --color-accent: #c08c7c; /* 赤褐色 */
+        --color-text-dark: #2c2c2c;
+        --color-text-light: #fefefe;
+        --color-border: #bcaaa4; /* 淺褐色 */
+        --color-hover: #e0e0d8; /* 淺灰 */
+    }
+
+    body {
+        font-family: 'Noto Sans TC', 'Zen Old Mincho', sans-serif;
+        text-align: center;
+        background-color: var(--color-secondary);
+        color: var(--color-text-dark);
+        line-height: 1.6;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><defs><pattern id="a" width="69.141" height="40.5" patternTransform="scale(3)" patternUnits="userSpaceOnUse"><rect width="100%" height="100%" fill="%23fff"/><path fill="none" stroke="%23ecc94b" stroke-width=".5" d="M69.212 40H46.118L34.57 20 46.118 0h23.094l11.547 20zM57.665 60H34.57L23.023 40 34.57 20h23.095l11.547 20zm0-40H34.57L23.023 0 34.57-20h23.095L69.212 0zM34.57 60H11.476L-.07 40l11.547-20h23.095l11.547 20zm0-40H11.476L-.07 0l11.547-20h23.095L46.118 0zM23.023 40H-.07l-11.547-20L-.07 0h23.094L34.57 20z"/></pattern></defs><rect width="800%" height="800%" fill="url(%23a)"/></svg>');
+        background-repeat: repeat;
+    }
+
+    h2 {
+        font-family: 'Zen Old Mincho', serif;
+        font-size: 2.8em;
+        color: var(--color-primary);
+        border-bottom: 3px solid var(--color-accent);
+        display: inline-block;
+        padding-bottom: 8px;
+        margin-top: 40px;
+    }
+
+    h3#week_range {
+        font-family: 'Zen Old Mincho', serif;
+        font-size: 1.5em;
+        color: var(--color-primary);
+        margin: 25px 0;
+    }
+
+    div {
+        margin-bottom: 25px;
+    }
+
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 95%;
+        max-width: 1200px;
+        margin: 20px auto;
+        border: 2px solid var(--color-border);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+        border: 1px solid #dcdcc0;
+        padding: 14px;
+        text-align: center;
+        transition: background-color 0.3s ease;
+    }
+
+    
+    thead tr:first-child th {
+        background-color: var(--color-primary);
+        color: var(--color-text-light);
+        font-weight: 400;
+    }
+
+    thead tr:nth-child(2) th {
+        background-color: var(--color-accent);
+        color: var(--color-text-light);
+        font-weight: 700;
+        border-top: 2px solid var(--color-primary);
+    }
+
+    
+    td:first-child, th:first-child {
+        background-color: #f4f3e7;
+        font-weight: 700;
+        color: var(--color-primary);
+        font-family: 'Zen Old Mincho', serif;
+	font-size: 1.3em;
+    }
+    
+    
+    tbody tr:nth-child(odd) td:not(:first-child) {
+        background-color: #ffffff;
+    }
+    
+    tbody tr:nth-child(even) td:not(:first-child) {
+        background-color: #f7f7f2;
+    }
+
+    
+    tbody td:not(:first-child):hover {
+        background-color: var(--color-hover);
+        cursor: pointer;
+    }
+
+    tbody td:not(:first-child) {
+        font-weight: bold;
+    }	
+
+    input[type=date], button {
+        padding: 12px 18px;
+        border-radius: 8px;
+        border: 1px solid var(--color-border);
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 1.1em;
+        color: var(--color-text-dark);
+        background-color: #ffffff;
+    }
+    
+    button {
+        background-color: var(--color-primary);
+        color: var(--color-text-light);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-left: 10px;
+        border: none;
+    }
+
+    button:hover {
+        background-color: var(--color-accent);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .query-label {
+        font-size: 1.3em;
+        margin-right: 8px;
+    }
+
+    .off-shift {
+        color: red;
+        font-weight: bold;
+    }
+
+
+</style>
+</head>
+<body>
+
+<h2>班表預覽</h2>
+
+<div>
+    <span class="query-label">查詢日期：</span>
+    <input type="date" id="query_date">
+    <button onclick="showSchedule()">查詢</button>
+</div>
+
+<h3 id="week_range"></h3>
+<table id="schedule_table">
+    <thead>
+        <tr id="date_row">
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+        <tr>
+            <th>星期</th>
+            <th>禮拜一</th>
+            <th>禮拜二</th>
+            <th>禮拜三</th>
+            <th>禮拜四</th>
+            <th>禮拜五</th>
+            <th>禮拜六</th>
+            <th>禮拜日</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<script>
+    const merged_schedule_data = [
+    [["晏璿", "MA"], ["信樺", "MN"], ["宗驦", "AN"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MN"], ["信樺", "MA"], ["宗驦", "OFF"], ["藥助", "AN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "M"], ["藥助", "M"]],
+    [["晏璿", "AN"], ["信樺", "OFF"], ["宗驦", "MA"], ["藥助", "MN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "AN"], ["宗驦", "MN"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "M"], ["信樺", "M"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "MN"], ["信樺", "MA"], ["宗驦", "OFF"], ["藥助", "AN"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MA"], ["信樺", "MN"], ["宗驦", "AN"], ["藥助", "OFF"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "M"], ["藥助", "M"]],
+    [["晏璿", "OFF"], ["信樺", "AN"], ["宗驦", "MN"], ["藥助", "MA"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "AN"], ["信樺", "OFF"], ["宗驦", "MA"], ["藥助", "MN"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "M"], ["信樺", "M"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "MA"], ["信樺", "MN"], ["宗驦", "AN"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MN"], ["信樺", "MA"], ["宗驦", "OFF"], ["藥助", "AN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "M"], ["藥助", "M"]],
+    [["晏璿", "AN"], ["信樺", "OFF"], ["宗驦", "MA"], ["藥助", "MN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "AN"], ["宗驦", "MN"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "M"], ["信樺", "M"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "MN"], ["信樺", "MA"], ["宗驦", "OFF"], ["藥助", "AN"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MA"], ["信樺", "MN"], ["宗驦", "AN"], ["藥助", "OFF"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "M"], ["藥助", "M"]],
+    [["晏璿", "OFF"], ["信樺", "AN"], ["宗驦", "MN"], ["藥助", "MA"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "AN"], ["信樺", "OFF"], ["宗驦", "MA"], ["藥助", "MN"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "M"], ["信樺", "M"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["信樺", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["晏璿", "AN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["晏璿", "M"]],
+    [["信樺", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["晏璿", "MN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["晏璿", "AN"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["晏璿", "OFF"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["晏璿", "M"]],
+    [["信樺", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["晏璿", "MA"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["晏璿", "MN"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["晏璿", "AN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["晏璿", "M"]],
+    [["信樺", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["晏璿", "MN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["晏璿", "AN"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["晏璿", "OFF"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["晏璿", "M"]],
+    [["信樺", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["晏璿", "MA"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["晏璿", "MN"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["宗驦", "MA"], ["藥助", "MN"], ["晏璿", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MN"], ["藥助", "MA"], ["晏璿", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "M"], ["信樺", "M"]],
+    [["宗驦", "AN"], ["藥助", "OFF"], ["晏璿", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "AN"], ["晏璿", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["藥助", "M"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MN"], ["藥助", "MA"], ["晏璿", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["藥助", "MN"], ["晏璿", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "M"], ["信樺", "M"]],
+    [["宗驦", "OFF"], ["藥助", "AN"], ["晏璿", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "AN"], ["藥助", "OFF"], ["晏璿", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["藥助", "M"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MA"], ["藥助", "MN"], ["晏璿", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MN"], ["藥助", "MA"], ["晏璿", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "M"], ["信樺", "M"]],
+    [["宗驦", "AN"], ["藥助", "OFF"], ["晏璿", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "AN"], ["晏璿", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["藥助", "M"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MN"], ["藥助", "MA"], ["晏璿", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["藥助", "MN"], ["晏璿", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["宗驦", "OFF"], ["晏璿", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "AN"], ["晏璿", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["晏璿", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["藥助", "MA"], ["晏璿", "MN"], ["信樺", "AN"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MN"], ["晏璿", "MA"], ["信樺", "OFF"], ["宗驦", "AN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "M"], ["宗驦", "M"]],
+    [["藥助", "AN"], ["晏璿", "OFF"], ["信樺", "MA"], ["宗驦", "MN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "AN"], ["信樺", "MN"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "M"], ["晏璿", "M"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "MN"], ["晏璿", "MA"], ["信樺", "OFF"], ["宗驦", "AN"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MA"], ["晏璿", "MN"], ["信樺", "AN"], ["宗驦", "OFF"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "M"], ["宗驦", "M"]],
+    [["藥助", "OFF"], ["晏璿", "AN"], ["信樺", "MN"], ["宗驦", "MA"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "AN"], ["晏璿", "OFF"], ["信樺", "MA"], ["宗驦", "MN"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "M"], ["晏璿", "M"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "MA"], ["晏璿", "MN"], ["信樺", "AN"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MN"], ["晏璿", "MA"], ["信樺", "OFF"], ["宗驦", "AN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "M"], ["宗驦", "M"]],
+    [["藥助", "AN"], ["晏璿", "OFF"], ["信樺", "MA"], ["宗驦", "MN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "AN"], ["信樺", "MN"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "M"], ["晏璿", "M"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "MN"], ["晏璿", "MA"], ["信樺", "OFF"], ["宗驦", "AN"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MA"], ["晏璿", "MN"], ["信樺", "AN"], ["宗驦", "OFF"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "M"], ["宗驦", "M"]],
+    [["藥助", "OFF"], ["晏璿", "AN"], ["信樺", "MN"], ["宗驦", "MA"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "AN"], ["晏璿", "OFF"], ["信樺", "MA"], ["宗驦", "MN"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "M"], ["晏璿", "M"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["宗驦", "MA"], ["晏璿", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MN"], ["晏璿", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["宗驦", "AN"], ["晏璿", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["晏璿", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MN"], ["晏璿", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["晏璿", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["宗驦", "OFF"], ["晏璿", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "AN"], ["晏璿", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["晏璿", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MA"], ["晏璿", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MN"], ["晏璿", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["宗驦", "AN"], ["晏璿", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["晏璿", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MN"], ["晏璿", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["晏璿", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["宗驦", "OFF"], ["晏璿", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "AN"], ["晏璿", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["晏璿", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["晏璿", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["晏璿", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["晏璿", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["晏璿", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+];
+
+const data_start_date = new Date(2024, 8, 30); 
+
+const annual_reset_month = 9;
+const annual_reset_day = 1;
+
+const persons_display_order = ["宗驦", "晏璿", "藥助", "信樺"];
+
+function getFirstMondayOfYearCycle(year) {
+    let cycle_start_date = new Date(year, annual_reset_month - 1, annual_reset_day);
+    cycle_start_date.setHours(0, 0, 0, 0); 
+    if (cycle_start_date.getDay() !== 1) { 
+        const daysUntilMonday = (1 - cycle_start_date.getDay() + 7) % 7;
+        cycle_start_date.setDate(cycle_start_date.getDate() + daysUntilMonday);
+    }
+    return cycle_start_date;
+}
+
+function getWeekSchedule(selected_date) {
+    const monday_of_selected_week = new Date(selected_date);
+    const dayOfWeek = monday_of_selected_week.getDay();
+    const diffToMonday = (dayOfWeek === 0) ? -6 : (1 - dayOfWeek);
+    monday_of_selected_week.setDate(monday_of_selected_week.getDate() + diffToMonday);
+    monday_of_selected_week.setHours(0, 0, 0, 0); 
+    const millisecondsPerDay = 1000 * 60 * 60 * 24;
+    const diffInMilliseconds = monday_of_selected_week - data_start_date;
+    const diffInDays = Math.round(diffInMilliseconds / millisecondsPerDay); 
+    const start_data_index = (diffInDays + merged_schedule_data.length) % merged_schedule_data.length;
+    const person_weekly_shifts = {};
+    persons_display_order.forEach(p => person_weekly_shifts[p] = Array(7).fill(""));
+    for (let i = 0; i < 7; i++) {
+        const current_day_data_index = (start_data_index + i) % merged_schedule_data.length;
+        const daily_shifts = merged_schedule_data[current_day_data_index];
+        if (Array.isArray(daily_shifts)) {
+            daily_shifts.forEach(([person_name, shift]) => {
+                if (person_name in person_weekly_shifts) {
+                    person_weekly_shifts[person_name][i] = shift;
+                }
+            });
+        } else {
+            console.error(`Error: Data at index ${current_day_data_index} is not an array.`, daily_shifts);
+        }
+    }
+    return { monday_of_selected_week, person_weekly_shifts };
+}
+
+function showSchedule() {
+    const queryInput = document.getElementById("query_date").value;
+    let selected_date;
+    if (queryInput) {
+        selected_date = new Date(queryInput);
+        if (isNaN(selected_date.getTime())) {
+            alert("日期格式無效，請重新選擇。");
+            return;
+        }
+    } else {
+        selected_date = new Date();
+    }
+    const { monday_of_selected_week, person_weekly_shifts } = getWeekSchedule(selected_date);
+    const wedIndex = 2;
+    const groupA = []; 
+    const groupB = []; 
+    for (let person in person_weekly_shifts) {
+        const shift = person_weekly_shifts[person][wedIndex];
+        if (shift.includes("MAN")) {
+            groupA.push(person);
+        } else if (shift.includes("OFF")) {
+            groupB.push(person);
+        } else {
+            groupB.push(person);
+        }
+    }
+    let persons_display_order = ["宗驦"];
+    if (groupA.includes("宗驦")) {
+        persons_display_order = ["宗驦", ...groupA.filter(p => p !== "宗驦"), ...groupB];
+    } else {
+        persons_display_order = ["宗驦", ...groupB.filter(p => p !== "宗驦"), ...groupA];
+    }
+    const week_start = new Date(monday_of_selected_week);
+    const week_end = new Date(monday_of_selected_week);
+    week_end.setDate(week_end.getDate() + 6);
+    const week_start_str = `${week_start.getFullYear()}-${(week_start.getMonth() + 1).toString().padStart(2, '0')}-${week_start.getDate().toString().padStart(2, '0')}`;
+    const week_end_str = `${week_end.getFullYear()}-${(week_end.getMonth() + 1).toString().padStart(2, '0')}-${week_end.getDate().toString().padStart(2, '0')}`;
+    document.getElementById("week_range").innerText = `週期：${week_start_str} 至 ${week_end_str}`;
+    const date_row = document.getElementById("date_row");
+    date_row.innerHTML = '<th>日期</th>';
+    let current_date = new Date(monday_of_selected_week);
+    for (let i = 0; i < 7; i++) {
+        const dateCell = document.createElement("th");
+        dateCell.textContent = `${current_date.getMonth() + 1}/${current_date.getDate()}`;
+        date_row.appendChild(dateCell);
+        current_date.setDate(current_date.getDate() + 1);
+    }
+    const tbody = document.querySelector("#schedule_table tbody");
+    tbody.innerHTML = "";
+    persons_display_order.forEach((person) => {
+            const row = document.createElement("tr");
+            const nameCell = document.createElement("td");
+            nameCell.textContent = person;
+            row.appendChild(nameCell);
+            person_weekly_shifts[person].forEach((shift) => {
+                const cell = document.createElement("td");
+                cell.textContent = shift;
+                if (shift === "OFF") {
+                    cell.classList.add("off-shift");
+                }
+                row.appendChild(cell);
+            });
+            tbody.appendChild(row);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayString = `${year}-${month}-${day}`;
+
+    document.getElementById("query_date").value = todayString;
+    showSchedule();
+});
+</script>
+</body>
+</html>
