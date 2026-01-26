@@ -342,15 +342,15 @@
     [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
     [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
     [["宗驦", "MA"], ["藥助", "MN"], ["晏璿", "AN"], ["信樺", "OFF"]],
-    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
-    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "M"], ["信樺", "M"]],
-    [["宗驦", "OFF"], ["晏璿", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
-    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
-    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
-    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
-    [["宗驦", "AN"], ["晏璿", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
-    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
-    [["宗驦", "M"], ["晏璿", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "M"], ["信樺", "M"]],
+    [["宗驦", "OFF"], ["藥助", "AN"], ["晏璿", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "AN"], ["藥助", "OFF"], ["晏璿", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["藥助", "M"], ["晏璿", "OFF"], ["信樺", "OFF"]],
     [["藥助", "MA"], ["晏璿", "MN"], ["信樺", "AN"], ["宗驦", "OFF"]],
     [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
     [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
@@ -634,15 +634,9 @@ function showSchedule() {
 
 document.addEventListener("DOMContentLoaded", () => {
     const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const todayString = `${year}-${month}-${day}`;
-
-    document.getElementById("query_date").value = todayString;
+    document.getElementById("query_date").value = today.toISOString().split("T")[0];
     showSchedule();
 });
 </script>
 </body>
-
 </html>
