@@ -634,7 +634,15 @@ function showSchedule() {
 
 document.addEventListener("DOMContentLoaded", () => {
     const today = new Date();
-    document.getElementById("query_date").value = today.toISOString().split("T")[0];
+    
+    // 取得本地時區的年、月、日，並自動補零（例如把 3 變成 03）
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    
+    // 組合成 YYYY-MM-DD 的格式
+    document.getElementById("query_date").value = `${year}-${month}-${day}`;
+    
     showSchedule();
 });
 </script>
