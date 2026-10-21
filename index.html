@@ -29,8 +29,12 @@
     td:first-child, th:first-child { background-color: #f4f3e7; font-weight: 700; color: var(--color-primary); font-family: 'Zen Old Mincho', serif; font-size: 1.3em; }
     tbody tr:nth-child(odd) td:not(:first-child) { background-color: #ffffff; }
     tbody tr:nth-child(even) td:not(:first-child) { background-color: #f7f7f2; }
-    tbody td:not(:first-child):hover { background-color: var(--color-hover); cursor: pointer; }
     tbody td:not(:first-child) { font-weight: bold; }
+
+    /* 表格儲存格 hover：只在真正支援 hover 的裝置套用，避免手機點擊後卡色 */
+    @media (hover: hover) and (pointer: fine) {
+        tbody td:not(:first-child):hover { background-color: var(--color-hover); cursor: pointer; }
+    }
 
     /* ===== 日期輸入框 ===== */
     input[type=date] {
@@ -61,12 +65,20 @@
         vertical-align: middle;
         transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
         box-shadow: 0 4px 0 #26344a, 0 8px 14px rgba(0, 0, 0, 0.22);
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
     }
-    button:hover {
-        background-color: var(--color-accent);
-        transform: translateY(-3px);
-        box-shadow: 0 7px 0 #9c6d60, 0 12px 22px rgba(0, 0, 0, 0.28);
+
+    /* hover 只在真正有滑鼠游標的裝置生效（手機不會卡色） */
+    @media (hover: hover) and (pointer: fine) {
+        button:hover {
+            background-color: var(--color-accent);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 0 #9c6d60, 0 12px 22px rgba(0, 0, 0, 0.28);
+        }
     }
+
+    /* 按下回饋：觸控與滑鼠皆適用，放開即自動解除 */
     button:active {
         transform: translateY(2px);
         box-shadow: 0 2px 0 #26344a, 0 4px 8px rgba(0, 0, 0, 0.18);
@@ -92,24 +104,32 @@
         color: var(--color-primary);
         border: 2px solid transparent;
         box-shadow: 0 3px 0 rgba(60, 79, 109, 0.35), 0 5px 10px rgba(0, 0, 0, 0.15);
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
     }
-    .mode-group .mode-btn:hover {
-        background-color: #fdf8f3;
-        color: var(--color-accent);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 0 rgba(192, 140, 124, 0.55), 0 8px 14px rgba(0, 0, 0, 0.20);
+
+    /* 模式按鈕 hover：同樣包進媒體查詢，手機點擊後不會卡色 */
+    @media (hover: hover) and (pointer: fine) {
+        .mode-group .mode-btn:hover {
+            background-color: #fdf8f3;
+            color: var(--color-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 0 rgba(192, 140, 124, 0.55), 0 8px 14px rgba(0, 0, 0, 0.20);
+        }
+        .mode-group .mode-btn.active:hover {
+            background-color: #b57f6f;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 0 #9c6d60, 0 9px 16px rgba(0, 0, 0, 0.24);
+        }
     }
+
+    /* 選中狀態：由 JS 的 .active 控制，不受 hover 影響 */
     .mode-group .mode-btn.active {
         background-color: var(--color-accent);
         color: var(--color-text-light);
         border-color: #9c6d60;
         transform: translateY(1px);
         box-shadow: 0 3px 0 #9c6d60, 0 6px 12px rgba(0, 0, 0, 0.22);
-    }
-    .mode-group .mode-btn.active:hover {
-        background-color: #b57f6f;
-        transform: translateY(-1px);
-        box-shadow: 0 5px 0 #9c6d60, 0 9px 16px rgba(0, 0, 0, 0.24);
     }
 
     .query-label { font-size: 1.3em; margin-right: 8px; }
