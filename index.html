@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<!-- saved from url=(0033)https://rxscck.github.io/rxsched/ -->
+<html lang="zh-Hant"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>班表預覽</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&family=Zen+Old+Mincho:wght@400;700&display=swap');
+
+    :root {
+        --color-primary: #3c4f6d; /* 深藍色 */
+        --color-secondary: #f4f3e7; /* 淺米色 */
+        --color-accent: #c08c7c; /* 赤褐色 */
+        --color-text-dark: #2c2c2c;
+        --color-text-light: #fefefe;
+        --color-border: #bcaaa4; /* 淺褐色 */
+        --color-hover: #e0e0d8; /* 淺灰 */
+    }
+
+    body {
+        font-family: 'Noto Sans TC', 'Zen Old Mincho', sans-serif;
+        text-align: center;
+        background-color: var(--color-secondary);
+        color: var(--color-text-dark);
+        line-height: 1.6;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><defs><pattern id="a" width="69.141" height="40.5" patternTransform="scale(3)" patternUnits="userSpaceOnUse"><rect width="100%" height="100%" fill="%23fff"/><path fill="none" stroke="%23ecc94b" stroke-width=".5" d="M69.212 40H46.118L34.57 20 46.118 0h23.094l11.547 20zM57.665 60H34.57L23.023 40 34.57 20h23.095l11.547 20zm0-40H34.57L23.023 0 34.57-20h23.095L69.212 0zM34.57 60H11.476L-.07 40l11.547-20h23.095l11.547 20zm0-40H11.476L-.07 0l11.547-20h23.095L46.118 0zM23.023 40H-.07l-11.547-20L-.07 0h23.094L34.57 20z"/></pattern></defs><rect width="800%" height="800%" fill="url(%23a)"/></svg>');
+        background-repeat: repeat;
+    }
+
+    h2 {
+        font-family: 'Zen Old Mincho', serif;
+        font-size: 2.8em;
+        color: var(--color-primary);
+        border-bottom: 3px solid var(--color-accent);
+        display: inline-block;
+        padding-bottom: 8px;
+        margin-top: 40px;
+    }
+
+    h3#week_range, h3#week_range_2 {
+        font-family: 'Zen Old Mincho', serif;
+        font-size: 1.5em;
+        color: var(--color-primary);
+        margin: 25px 0;
+    }
+
+    div {
+        margin-bottom: 25px;
+    }
+
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 95%;
+        max-width: 1200px;
+        margin: 20px auto;
+        border: 2px solid var(--color-border);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+        border: 1px solid #dcdcc0;
+        padding: 14px;
+        text-align: center;
+        transition: background-color 0.3s ease;
+    }
+
+    
+    thead tr:first-child th {
+        background-color: var(--color-primary);
+        color: var(--color-text-light);
+        font-weight: 400;
+    }
+
+    thead tr:nth-child(2) th {
+        background-color: var(--color-accent);
+        color: var(--color-text-light);
+        font-weight: 700;
+        border-top: 2px solid var(--color-primary);
+    }
+
+    
+    td:first-child, th:first-child {
+        background-color: #f4f3e7;
+        font-weight: 700;
+        color: var(--color-primary);
+        font-family: 'Zen Old Mincho', serif;
+	font-size: 1.3em;
+    }
+    
+    
+    tbody tr:nth-child(odd) td:not(:first-child) {
+        background-color: #ffffff;
+    }
+    
+    tbody tr:nth-child(even) td:not(:first-child) {
+        background-color: #f7f7f2;
+    }
+
+    
+    tbody td:not(:first-child):hover {
+        background-color: var(--color-hover);
+        cursor: pointer;
+    }
+
+    tbody td:not(:first-child) {
+        font-weight: bold;
+    }	
+
+    /* ===== 日期輸入框 ===== */
+    input[type=date] {
+        padding: 12px 18px;
+        border-radius: 8px;
+        border: 1px solid var(--color-border);
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 1.1em;
+        color: var(--color-text-dark);
+        background-color: #ffffff;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+        vertical-align: middle;
+    }
+
+    /* ===== 一般按鈕（查詢）：浮起陰影 ===== */
+    button {
+        padding: 12px 22px;
+        border-radius: 10px;
+        border: none;
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 1.1em;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: var(--color-text-light);
+        background-color: var(--color-primary);
+        cursor: pointer;
+        margin-left: 10px;
+        vertical-align: middle;
+        transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+        box-shadow: 0 4px 0 #26344a, 0 8px 14px rgba(0, 0, 0, 0.22);
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    /* hover 只在真正有滑鼠游標的裝置生效（手機不會卡色） */
+    @media (hover: hover) and (pointer: fine) {
+        button:hover {
+            background-color: var(--color-accent);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 0 #9c6d60, 0 12px 22px rgba(0, 0, 0, 0.28);
+        }
+    }
+
+    /* 按下回饋：明顯變色 + 下沉，觸控與滑鼠皆適用，放開即自動解除 */
+    button:active {
+        background-color: var(--color-accent);
+        color: var(--color-text-light);
+        transform: translateY(3px);
+        box-shadow: 0 1px 0 #9c6d60, 0 3px 6px rgba(0, 0, 0, 0.20);
+    }
+
+    /* ===== 正常 / 特別：外框群組 ===== */
+    .mode-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 14px;
+        padding: 6px;
+        border: 2px solid var(--color-accent);
+        border-radius: 14px;
+        background-color: rgba(192, 140, 124, 0.14);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.12);
+        vertical-align: middle;
+    }
+    .mode-group .mode-btn {
+        margin-left: 0;
+        padding: 10px 20px;
+        background-color: #ffffff;
+        color: var(--color-primary);
+        border: 2px solid transparent;
+        box-shadow: 0 3px 0 rgba(60, 79, 109, 0.35), 0 5px 10px rgba(0, 0, 0, 0.15);
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    /* 模式按鈕 hover：同樣包進媒體查詢，手機點擊後不會卡色 */
+    @media (hover: hover) and (pointer: fine) {
+        .mode-group .mode-btn:hover {
+            background-color: #fdf8f3;
+            color: var(--color-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 0 rgba(192, 140, 124, 0.55), 0 8px 14px rgba(0, 0, 0, 0.20);
+        }
+        .mode-group .mode-btn.active:hover {
+            background-color: #b57f6f;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 0 #9c6d60, 0 9px 16px rgba(0, 0, 0, 0.24);
+        }
+    }
+
+    /* 未選中的模式按鈕：按下時明顯變褐底白字（避免與 .active 衝突） */
+    .mode-group .mode-btn:not(.active):active {
+        background-color: var(--color-accent);
+        color: var(--color-text-light);
+        border-color: #9c6d60;
+        transform: translateY(2px);
+        box-shadow: 0 1px 0 #9c6d60, 0 3px 6px rgba(0, 0, 0, 0.18);
+    }
+
+    /* 已選中的模式按鈕：按下時再加深，回饋更明顯 */
+    .mode-group .mode-btn.active:active {
+        background-color: #9c6d60;
+        color: var(--color-text-light);
+        transform: translateY(3px);
+        box-shadow: 0 1px 0 #7e554a, 0 3px 6px rgba(0, 0, 0, 0.22);
+    }
+
+    /* 選中狀態：由 JS 的 .active 控制，不受 hover 影響 */
+    .mode-group .mode-btn.active {
+        background-color: var(--color-accent);
+        color: var(--color-text-light);
+        border-color: #9c6d60;
+        transform: translateY(1px);
+        box-shadow: 0 3px 0 #9c6d60, 0 6px 12px rgba(0, 0, 0, 0.22);
+    }
+
+    .query-label {
+        font-size: 1.3em;
+        margin-right: 8px;
+    }
+
+    .off-shift {
+        color: red;
+        font-weight: bold;
+    }
+
+    /* 特別模式：被替換班別的儲存格（與正常版不同）用橘色醒目提醒 */
+    .orange-shift {
+        color: #f97316 !important;
+        font-weight: bold;
+    }
+
+    /* 特別模式：怡瑱的 M 用紫色，OFF 維持黑色（不套用其他人的紅色 OFF） */
+    .yi-m {
+        color: #6d28d9;
+        font-weight: bold;
+    }
+
+    .yi-off {
+        color: #000000;
+        font-weight: bold;
+    }
+
+    /* 統計欄樣式：背景與其他欄位一致，文字以藍色突顯，左側黑色實線分隔 */
+    th.stat {
+        border-left: 2px solid #000000 !important;
+    }
+
+    td.stat {
+        color: #1d4ed8 !important;        /* 寶藍色，與深淺底色都有良好對比 */
+        font-family: 'Zen Old Mincho', serif;
+        font-size: 1.2em;
+        font-weight: 700;
+        border-left: 2px solid #000000 !important;
+        cursor: default !important;
+    }
+
+</style>
+</head>
+<body>
+
+<h2>班表預覽</h2>
+
+<div>
+    <span class="query-label">查詢日期：</span>
+    <input type="date" id="query_date">
+    <button onclick="showSchedule()">查詢</button>
+    <span class="mode-group">
+        <button id="btn_normal" onclick="setMode('normal')" class="mode-btn active" aria-pressed="true">正常</button>
+        <button id="btn_special" onclick="setMode('special')" class="mode-btn" aria-pressed="false">特別</button>
+    </span>
+</div>
+
+<h3 id="week_range">週期：2026-10-19 至 2026-10-25</h3>
+<table id="schedule_table">
+    <thead>
+        <tr id="date_row"><th>日期</th><th>10/19</th><th>10/20</th><th>10/21</th><th>10/22</th><th>10/23</th><th>10/24</th><th>10/25</th></tr>
+        <tr>
+            <th>星期</th>
+            <th>禮拜一</th>
+            <th>禮拜二</th>
+            <th>禮拜三</th>
+            <th>禮拜四</th>
+            <th>禮拜五</th>
+            <th>禮拜六</th>
+            <th>禮拜日</th>
+            <th class="stat">統計</th>
+        </tr>
+    </thead>
+    <tbody><tr><td>宗驦</td><td>AN</td><td>MA</td><td class="off-shift">OFF</td><td>MA</td><td class="off-shift">OFF</td><td>MAN</td><td>M</td></tr><tr><td>信樺</td><td class="off-shift">OFF</td><td>MA</td><td class="off-shift">OFF</td><td>MA</td><td>AN</td><td>MAN</td><td>M</td></tr><tr><td>晏璿</td><td>MA</td><td>N</td><td>MAN</td><td>N</td><td>MN</td><td class="off-shift">OFF</td><td class="off-shift">OFF</td></tr><tr><td>藥助</td><td>MN</td><td>N</td><td>MAN</td><td>N</td><td>MA</td><td class="off-shift">OFF</td><td class="off-shift">OFF</td></tr></tbody>
+</table>
+
+<h3 id="week_range_2">週期：</h3>
+<table id="schedule_table_2">
+    <thead>
+        <tr id="date_row_2"><th>日期</th></tr>
+        <tr>
+            <th>星期</th>
+            <th>禮拜一</th>
+            <th>禮拜二</th>
+            <th>禮拜三</th>
+            <th>禮拜四</th>
+            <th>禮拜五</th>
+            <th>禮拜六</th>
+            <th>禮拜日</th>
+            <th class="stat">統計</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    const merged_schedule_data = [
+    [["晏璿", "MA"], ["信樺", "MN"], ["宗驦", "AN"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MN"], ["信樺", "MA"], ["宗驦", "OFF"], ["藥助", "AN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "M"], ["藥助", "M"]],
+    [["晏璿", "AN"], ["信樺", "OFF"], ["宗驦", "MA"], ["藥助", "MN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "AN"], ["宗驦", "MN"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "M"], ["信樺", "M"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "MN"], ["信樺", "MA"], ["宗驦", "OFF"], ["藥助", "AN"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MA"], ["信樺", "MN"], ["宗驦", "AN"], ["藥助", "OFF"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "M"], ["藥助", "M"]],
+    [["晏璿", "OFF"], ["信樺", "AN"], ["宗驦", "MN"], ["藥助", "MA"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "AN"], ["信樺", "OFF"], ["宗驦", "MA"], ["藥助", "MN"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "M"], ["信樺", "M"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "MA"], ["信樺", "MN"], ["宗驦", "AN"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MN"], ["信樺", "MA"], ["宗驦", "OFF"], ["藥助", "AN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "M"], ["藥助", "M"]],
+    [["晏璿", "AN"], ["信樺", "OFF"], ["宗驦", "MA"], ["藥助", "MN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "AN"], ["宗驦", "MN"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "M"], ["信樺", "M"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "MN"], ["信樺", "MA"], ["宗驦", "OFF"], ["藥助", "AN"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "N"], ["信樺", "N"], ["宗驦", "MA"], ["藥助", "MA"]],
+    [["晏璿", "MA"], ["信樺", "MN"], ["宗驦", "AN"], ["藥助", "OFF"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "M"], ["藥助", "M"]],
+    [["晏璿", "OFF"], ["信樺", "AN"], ["宗驦", "MN"], ["藥助", "MA"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "OFF"], ["信樺", "OFF"], ["宗驦", "MAN"], ["藥助", "MAN"]],
+    [["晏璿", "MA"], ["信樺", "MA"], ["宗驦", "N"], ["藥助", "N"]],
+    [["晏璿", "AN"], ["信樺", "OFF"], ["宗驦", "MA"], ["藥助", "MN"]],
+    [["晏璿", "MAN"], ["信樺", "MAN"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["晏璿", "M"], ["信樺", "M"], ["宗驦", "OFF"], ["藥助", "OFF"]],
+    [["信樺", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["晏璿", "AN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["晏璿", "M"]],
+    [["信樺", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["晏璿", "MN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["晏璿", "AN"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["晏璿", "OFF"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["晏璿", "M"]],
+    [["信樺", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["晏璿", "MA"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["晏璿", "MN"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["晏璿", "AN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["晏璿", "M"]],
+    [["信樺", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["晏璿", "MN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["晏璿", "AN"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "N"], ["宗驦", "N"], ["藥助", "MA"], ["晏璿", "MA"]],
+    [["信樺", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["晏璿", "OFF"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["晏璿", "M"]],
+    [["信樺", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["晏璿", "MA"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["晏璿", "MAN"]],
+    [["信樺", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["晏璿", "N"]],
+    [["信樺", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["晏璿", "MN"]],
+    [["信樺", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["信樺", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["晏璿", "OFF"]],
+    [["宗驦", "MA"], ["藥助", "MN"], ["晏璿", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MN"], ["藥助", "MA"], ["晏璿", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "M"], ["信樺", "M"]],
+    [["宗驦", "AN"], ["藥助", "OFF"], ["晏璿", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "AN"], ["晏璿", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["藥助", "M"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MN"], ["藥助", "MA"], ["晏璿", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["藥助", "MN"], ["晏璿", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "M"], ["信樺", "M"]],
+    [["宗驦", "OFF"], ["藥助", "AN"], ["晏璿", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "AN"], ["藥助", "OFF"], ["晏璿", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["藥助", "M"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MA"], ["藥助", "MN"], ["晏璿", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MN"], ["藥助", "MA"], ["晏璿", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "M"], ["信樺", "M"]],
+    [["宗驦", "AN"], ["藥助", "OFF"], ["晏璿", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "AN"], ["晏璿", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["藥助", "M"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MN"], ["藥助", "MA"], ["晏璿", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["藥助", "N"], ["晏璿", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["藥助", "MN"], ["晏璿", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "M"], ["信樺", "M"]],
+    [["宗驦", "OFF"], ["藥助", "AN"], ["晏璿", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["藥助", "OFF"], ["晏璿", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["藥助", "MA"], ["晏璿", "N"], ["信樺", "N"]],
+    [["宗驦", "AN"], ["藥助", "OFF"], ["晏璿", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MAN"], ["藥助", "MAN"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["藥助", "M"], ["晏璿", "OFF"], ["信樺", "OFF"]],
+    [["藥助", "MA"], ["晏璿", "MN"], ["信樺", "AN"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MN"], ["晏璿", "MA"], ["信樺", "OFF"], ["宗驦", "AN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "M"], ["宗驦", "M"]],
+    [["藥助", "AN"], ["晏璿", "OFF"], ["信樺", "MA"], ["宗驦", "MN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "AN"], ["信樺", "MN"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "M"], ["晏璿", "M"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "MN"], ["晏璿", "MA"], ["信樺", "OFF"], ["宗驦", "AN"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MA"], ["晏璿", "MN"], ["信樺", "AN"], ["宗驦", "OFF"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "M"], ["宗驦", "M"]],
+    [["藥助", "OFF"], ["晏璿", "AN"], ["信樺", "MN"], ["宗驦", "MA"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "AN"], ["晏璿", "OFF"], ["信樺", "MA"], ["宗驦", "MN"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "M"], ["晏璿", "M"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "MA"], ["晏璿", "MN"], ["信樺", "AN"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MN"], ["晏璿", "MA"], ["信樺", "OFF"], ["宗驦", "AN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "M"], ["宗驦", "M"]],
+    [["藥助", "AN"], ["晏璿", "OFF"], ["信樺", "MA"], ["宗驦", "MN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "AN"], ["信樺", "MN"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "M"], ["晏璿", "M"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "MN"], ["晏璿", "MA"], ["信樺", "OFF"], ["宗驦", "AN"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "N"], ["晏璿", "N"], ["信樺", "MA"], ["宗驦", "MA"]],
+    [["藥助", "MA"], ["晏璿", "MN"], ["信樺", "AN"], ["宗驦", "OFF"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "M"], ["宗驦", "M"]],
+    [["藥助", "OFF"], ["晏璿", "AN"], ["信樺", "MN"], ["宗驦", "MA"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "OFF"], ["晏璿", "OFF"], ["信樺", "MAN"], ["宗驦", "MAN"]],
+    [["藥助", "MA"], ["晏璿", "MA"], ["信樺", "N"], ["宗驦", "N"]],
+    [["藥助", "AN"], ["晏璿", "OFF"], ["信樺", "MA"], ["宗驦", "MN"]],
+    [["藥助", "MAN"], ["晏璿", "MAN"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["藥助", "M"], ["晏璿", "M"], ["信樺", "OFF"], ["宗驦", "OFF"]],
+    [["宗驦", "MA"], ["晏璿", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MN"], ["晏璿", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["宗驦", "AN"], ["晏璿", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["晏璿", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MN"], ["晏璿", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["晏璿", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["宗驦", "OFF"], ["晏璿", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "AN"], ["晏璿", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["晏璿", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MA"], ["晏璿", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MN"], ["晏璿", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["宗驦", "AN"], ["晏璿", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["晏璿", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "MN"], ["晏璿", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "N"], ["晏璿", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["晏璿", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["宗驦", "OFF"], ["晏璿", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "OFF"], ["晏璿", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["宗驦", "MA"], ["晏璿", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["宗驦", "AN"], ["晏璿", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["宗驦", "MAN"], ["晏璿", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["宗驦", "M"], ["晏璿", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["晏璿", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["晏璿", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["晏璿", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "MN"], ["宗驦", "MA"], ["藥助", "OFF"], ["信樺", "AN"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "N"], ["宗驦", "N"], ["藥助", "MA"], ["信樺", "MA"]],
+    [["晏璿", "MA"], ["宗驦", "MN"], ["藥助", "AN"], ["信樺", "OFF"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "M"], ["信樺", "M"]],
+    [["晏璿", "OFF"], ["宗驦", "AN"], ["藥助", "MN"], ["信樺", "MA"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "OFF"], ["宗驦", "OFF"], ["藥助", "MAN"], ["信樺", "MAN"]],
+    [["晏璿", "MA"], ["宗驦", "MA"], ["藥助", "N"], ["信樺", "N"]],
+    [["晏璿", "AN"], ["宗驦", "OFF"], ["藥助", "MA"], ["信樺", "MN"]],
+    [["晏璿", "MAN"], ["宗驦", "MAN"], ["藥助", "OFF"], ["信樺", "OFF"]],
+    [["晏璿", "M"], ["宗驦", "M"], ["藥助", "OFF"], ["信樺", "OFF"]],
+];
+
+const data_start_date = new Date(2024, 8, 30); 
+
+const annual_reset_month = 9;
+const annual_reset_day = 1;
+
+/* 每 8 週為一個人員組合(對應 XLSX A1 下拉清單的 1~6),共 6 組 = 48 週一個循環;
+   兩週為一組顯示:第 1-2 週、第 3-4 週、第 5-6 週、第 7-8 週 */
+const weeks_per_combo = 8;
+const weeks_per_view = 2;
+
+/* ===== 特別模式 =====
+   1. 「藥助」換成「怡瑱」，怡瑱每週固定：一、二、三、六 = M，其餘 OFF（每週 4 節、兩週 8 節）。
+   2. 與藥助搭班的人（同一組兩人中含藥助的那一組）完全不動。
+   3. 不含藥助的那一組兩人：每兩週其中一人拿到 A2 / B2 週班型（8 週內兩人輪替 4 次），
+      該週班型依下表替換，兩週統計仍維持 19：
+        A2 (MN,N,MAN,N,MA,OFF,OFF) → AN,AN,AN,AN,MA,OFF,OFF   (週一～週三不再上 M)
+        B2 (OFF,MA,OFF,MA,AN,MAN,M) → OFF,AN,OFF,MA,AN,AN,M    (週二、週六不再上 M)
+      另一人拿到的 A1 / B1 週班型維持原樣。
+   不足的人力由人工另外補足。 */
+let schedule_mode = "normal";                       // "normal" 正常 | "special" 特別
+const med_name = "藥助";
+const special_name = "怡瑱";
+const special_name_week = ["M", "M", "M", "OFF", "OFF", "M", "OFF"];
+const special_pattern_map = {
+    "MN,N,MAN,N,MA,OFF,OFF": ["AN", "AN", "AN", "AN", "MA", "OFF", "OFF"],
+    "OFF,MA,OFF,MA,AN,MAN,M": ["OFF", "AN", "OFF", "MA", "AN", "AN", "M"]
+};
+
+function applySpecialMode(person_weekly_shifts, persons_order) {
+    const med_index = persons_order.indexOf(med_name);
+    if (med_index === -1) return { person_weekly_shifts, persons_order, changed_days: {} };
+    // 固定的兩人一組：第 1、2 列為一組，第 3、4 列為一組；取不含藥助的那一組
+    const locked_pair = (med_index >= 2) ? [0, 1] : [2, 3];
+    const new_order = [];
+    const new_shifts = {};
+    const changed_days = {};      // 人名 → 與正常版不同的星期索引(0=週一…6=週日)，用來標橘色
+    persons_order.forEach((person, idx) => {
+        if (person === med_name) {
+            new_order.push(special_name);
+            new_shifts[special_name] = special_name_week.slice();
+            return;
+        }
+        let shifts = person_weekly_shifts[person];
+        if (locked_pair.includes(idx)) {
+            const replaced = special_pattern_map[shifts.join(",")];
+            if (replaced) {
+                changed_days[person] = new Set();
+                replaced.forEach((sh, d) => { if (sh !== shifts[d]) changed_days[person].add(d); });
+                shifts = replaced.slice();
+            }
+        }
+        new_order.push(person);
+        new_shifts[person] = shifts;
+    });
+    return { person_weekly_shifts: new_shifts, persons_order: new_order, changed_days };
+}
+
+/* 切換 正常／特別 模式，並以目前選取的日期重新顯示 */
+function setMode(mode) {
+    schedule_mode = mode;
+    const isNormal = (mode === "normal");
+    document.getElementById("btn_normal").classList.toggle("active", isNormal);
+    document.getElementById("btn_special").classList.toggle("active", !isNormal);
+    document.getElementById("btn_normal").setAttribute("aria-pressed", String(isNormal));
+    document.getElementById("btn_special").setAttribute("aria-pressed", String(!isNormal));
+    showSchedule();
+}
+
+function getFirstMondayOfYearCycle(year) {
+    let cycle_start_date = new Date(year, annual_reset_month - 1, annual_reset_day);
+    cycle_start_date.setHours(0, 0, 0, 0); 
+    if (cycle_start_date.getDay() !== 1) { 
+        const daysUntilMonday = (1 - cycle_start_date.getDay() + 7) % 7;
+        cycle_start_date.setDate(cycle_start_date.getDate() + daysUntilMonday);
+    }
+    return cycle_start_date;
+}
+
+function getWeekSchedule(selected_date) {
+    const monday_of_selected_week = new Date(selected_date);
+    const dayOfWeek = monday_of_selected_week.getDay();
+    const diffToMonday = (dayOfWeek === 0) ? -6 : (1 - dayOfWeek);
+    monday_of_selected_week.setDate(monday_of_selected_week.getDate() + diffToMonday);
+    monday_of_selected_week.setHours(0, 0, 0, 0); 
+    const millisecondsPerDay = 1000 * 60 * 60 * 24;
+    const diffInMilliseconds = monday_of_selected_week - data_start_date;
+    const diffInDays = Math.round(diffInMilliseconds / millisecondsPerDay); 
+    const start_data_index = (diffInDays + merged_schedule_data.length) % merged_schedule_data.length;
+    // 人員排列順序 = 該組合在 XLSX 裡的固定順序(同一週內每天的順序都相同)
+    const persons_order = merged_schedule_data[start_data_index].map(([person_name]) => person_name);
+    const person_weekly_shifts = {};
+    persons_order.forEach(p => person_weekly_shifts[p] = Array(7).fill(""));
+    for (let i = 0; i < 7; i++) {
+        const current_day_data_index = (start_data_index + i) % merged_schedule_data.length;
+        const daily_shifts = merged_schedule_data[current_day_data_index];
+        if (Array.isArray(daily_shifts)) {
+            daily_shifts.forEach(([person_name, shift]) => {
+                if (person_name in person_weekly_shifts) {
+                    person_weekly_shifts[person_name][i] = shift;
+                }
+            });
+        } else {
+            console.error(`Error: Data at index ${current_day_data_index} is not an array.`, daily_shifts);
+        }
+    }
+    if (schedule_mode === "special") {
+        const special = applySpecialMode(person_weekly_shifts, persons_order);
+        return { monday_of_selected_week, person_weekly_shifts: special.person_weekly_shifts, persons_order: special.persons_order, changed_days: special.changed_days };
+    }
+    return { monday_of_selected_week, person_weekly_shifts, persons_order, changed_days: {} };
+}
+
+/* 兩週一組的固定分頁:
+   點選第 1 或第 2 週的日期 → 顯示第 1+2 週;點選第 3 或第 4 週 → 顯示第 3+4 週,依此類推。
+   回傳「該組第一週」的星期一 */
+function getViewStartMonday(selected_date) {
+    const monday = new Date(selected_date);
+    const dayOfWeek = monday.getDay();
+    monday.setDate(monday.getDate() + ((dayOfWeek === 0) ? -6 : (1 - dayOfWeek)));
+    monday.setHours(0, 0, 0, 0);
+    const millisecondsPerDay = 1000 * 60 * 60 * 24;
+    const weeksSinceStart = Math.round((monday - data_start_date) / millisecondsPerDay) / 7;
+    const total_weeks = merged_schedule_data.length / 7;                 // 48 週一個循環
+    const week_in_cycle = ((weeksSinceStart % total_weeks) + total_weeks) % total_weeks;
+    const week_in_combo = week_in_cycle % weeks_per_combo;               // 0~7 (第 1~8 週)
+    const offset_weeks = week_in_combo % weeks_per_view;                 // 在兩週一組中是第幾週 (0 或 1)
+    monday.setDate(monday.getDate() - offset_weeks * 7);
+    return monday;
+}
+
+function formatDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/* 計算班別分數：M、A、N 各算 1 分（例：MA=2、MAN=3、M=1、OFF=0） */
+function countShiftScore(shift) {
+    if (!shift) return 0;
+    const matches = shift.match(/[MAN]/g);
+    return matches ? matches.length : 0;
+}
+
+/* 將單一週的班表畫進指定的表格中 */
+function renderWeek(weekSchedule, rangeEl, dateRowEl, tableEl) {
+    const { monday_of_selected_week, person_weekly_shifts, persons_order, changed_days } = weekSchedule;
+
+    // 週期文字
+    const week_start = new Date(monday_of_selected_week);
+    const week_end = new Date(monday_of_selected_week);
+    week_end.setDate(week_end.getDate() + 6);
+    rangeEl.innerText = `週期：${formatDate(week_start)} 至 ${formatDate(week_end)}`;
+
+    // 日期列（最後加上統計欄）
+    dateRowEl.innerHTML = '<th>日期</th>';
+    let current_date = new Date(monday_of_selected_week);
+    for (let i = 0; i < 7; i++) {
+        const dateCell = document.createElement("th");
+        dateCell.textContent = `${current_date.getMonth() + 1}/${current_date.getDate()}`;
+        dateRowEl.appendChild(dateCell);
+        current_date.setDate(current_date.getDate() + 1);
+    }
+    const statHeader = document.createElement("th");
+    statHeader.textContent = "統計";
+    statHeader.classList.add("stat");
+    dateRowEl.appendChild(statHeader);
+
+    // 班表內容
+    const tbody = tableEl.querySelector("tbody");
+    tbody.innerHTML = "";
+    persons_order.forEach((person) => {
+        const row = document.createElement("tr");
+        const nameCell = document.createElement("td");
+        nameCell.textContent = person;
+        row.appendChild(nameCell);
+
+        let total_score = 0;
+        person_weekly_shifts[person].forEach((shift, idx) => {
+            const cell = document.createElement("td");
+            cell.textContent = shift;
+            if (changed_days && changed_days[person] && changed_days[person].has(idx)) {
+                // 該人員該週班別與正常版不同 → 橘色提醒
+                cell.classList.add("orange-shift");
+            }
+            if (person === special_name) {
+                // 怡瑱：M 紫色、OFF 黑色
+                cell.classList.add(shift === "M" ? "yi-m" : "yi-off");
+            } else if (shift === "OFF") {
+                cell.classList.add("off-shift");
+            }
+            total_score += countShiftScore(shift);
+            row.appendChild(cell);
+        });
+
+        // 每週統計欄
+        const statCell = document.createElement("td");
+        statCell.textContent = total_score;
+        statCell.classList.add("stat");
+        row.appendChild(statCell);
+
+        tbody.appendChild(row);
+    });
+}
+
+function showSchedule() {
+    const queryInput = document.getElementById("query_date").value;
+    let selected_date;
+    if (queryInput) {
+        // 以本地時區解析 YYYY-MM-DD，避免時區造成日期位移
+        const parts = queryInput.split("-").map(Number);
+        selected_date = new Date(parts[0], parts[1] - 1, parts[2]);
+        if (isNaN(selected_date.getTime())) {
+            alert("日期格式無效，請重新選擇。");
+            return;
+        }
+    } else {
+        selected_date = new Date();
+    }
+
+    // 第一週（查詢日期所在「兩週一組」的第一週，固定分頁）
+    const firstWeek = getWeekSchedule(getViewStartMonday(selected_date));
+    renderWeek(
+        firstWeek,
+        document.getElementById("week_range"),
+        document.getElementById("date_row"),
+        document.getElementById("schedule_table")
+    );
+
+    // 第二週（下一週）
+    const nextMonday = new Date(firstWeek.monday_of_selected_week);
+    nextMonday.setDate(nextMonday.getDate() + 7);
+    const secondWeek = getWeekSchedule(nextMonday);
+    renderWeek(
+        secondWeek,
+        document.getElementById("week_range_2"),
+        document.getElementById("date_row_2"),
+        document.getElementById("schedule_table_2")
+    );
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const today = new Date();
+    
+    // 取得本地時區的年、月、日，並自動補零（例如把 3 變成 03）
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    
+    // 組合成 YYYY-MM-DD 的格式
+    document.getElementById("query_date").value = `${year}-${month}-${day}`;
+    
+    showSchedule();
+});
+</script>
+
+</body></html>
